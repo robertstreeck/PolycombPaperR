@@ -430,6 +430,8 @@ hm_rows = rld_rows[row_select,] %>%
          Pc.H = case_when(class == "Pc-H" ~ "Pc-H",
                           T ~ "a"))
 
+class_recode = c("non-Pc" = "non.Pc", "Pc-I" = "Pc.M", "Pc-H" = "Pc.H")
+
 hm_rows2 = rld_cluster %>%
   left_join(rld_cluster %>%
               left_join(rld_rows, by = "gene_id") %>%
