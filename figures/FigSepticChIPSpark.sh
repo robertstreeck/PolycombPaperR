@@ -1,0 +1,15 @@
+python3.8 ../data/bws/SparK.py \
+-pr chr3R:30196253-30241304 \
+-cf ../data/fig2/nomrbw/RestingH3K27me3NormalizedLogRatioArep.bg ../data/fig2/nomrbw/RestingH3K27me3NormalizedLogRatioBrep.bg ../data/fig2/nomrbw/RestingH3K27acNormalizedLogRatioArep.bg ../data/fig2/nomrbw/RestingH3K27acNormalizedLogRatioBrep.bg \
+-tf ../data/fig2/nomrbw/InfectedH3K27me3NormalizedLogRatioArep.bg ../data/fig2/nomrbw/InfectedH3K27me3NormalizedLogRatioBrep.bg ../data/fig2/nomrbw/InfectedH3K27acNormalizedLogRatioArep.bg ../data/fig2/nomrbw/InfectedH3K27acNormalizedLogRatioBrep.bg \
+-tg 1 1 2 2 \
+-cg 1 1 2 2 \
+-gtf /Users/streeck/Genomes/DmelBDGP6.91/Drosophila_melanogaster.BDGP6.91.gtf \
+-gl H3K27me3 H3K27ac \
+-dg CG9743 RpS7 Anp CecA1 CecA2 CecB CecC CG43448 \
+-l Control Infected \
+-sp yes \
+-sm 100 \
+-f all_grey \
+-sc 4575b4 d73027 \
+-o CecDiffLogRatioChIPVar4
