@@ -1,3 +1,6 @@
+# mac
+.DS_Store
+
 # History files
 .Rhistory
 .Rapp.history
@@ -34,3 +37,10 @@ vignettes/*.pdf
 
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
+
+# Specifics
+*.RData
+data/
+*.Rproj
+EM/
+*.pdf
