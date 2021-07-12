@@ -60,7 +60,16 @@ dds = DESeqDataSetFromMatrix(countData = as.matrix(DGEobject$counts), colData = 
 dds = dds[rowSums(counts(dds)) > 1,]
 rld = vst(dds, blind = FALSE)
 
+## select 3000 genes with the highes variance
+rv <- rowVars(assay(rld))
+select <- order(rv, decreasing = TRUE)[seq_len(3000)]
 
+## apply PCA analysis
+pca <- prcomp(t(assay(rld[select, ])))
+pcaPlot = as.data.frame(pca$x)
+pcaPlot = cbind(groups, pcaPlot)
+pcaPlot$ID = substr(row.names(pcaPlot), 1, nchar(row.names(pcaPlot))-4)
+var.explained = round(100*pca$sdev^2/sum(pca$sdev^2), 2)
 
 ## contrasts and fits
 contrasts = makeContrasts(H3.K27R = H3.K27R - H3.wt,
@@ -760,3 +769,30 @@ ggplot(enricht.plot.df, aes(y, k)) +
 
 enricht.plot.df %>% kable() %>% 
   kableExtra::kable_styling(bootstrap_options = c("striped", "condensed"))
+
+
+
+# PCA ---------------------------------------------------------------------
+
+
+library(RColorBrewer)
+library(plot3D)
+
+pcaPlot$groups = factor(pcaPlot$groups)
+
+t20 = ggthemes_data$tableau$`color-palettes`$regular$`Tableau 20`$value
+
+
+## FigMosaicPCA.pdf
+
+scatter3D(pcaPlot$PC1, pcaPlot$PC2, pcaPlot$PC3, 
+          bgvar = as.numeric(as.factor(pcaPlot$groups)), 
+          col = "black", bg = t20[as.numeric(pcaPlot$groups)],
+          theta = 210, phi = 20, xlab = paste0("PC1: ", var.explained[1], "% var"),
+          ylab = paste0("PC2: ", var.explained[2], "% var"), zlab = paste0("PC3: ", var.explained[3], "% var"), 
+          bty ="b2", lwd = 1.5, cex = 2.5, colkey = F, alpha = .8, pch = 21)
+legend("right",levels(pcaPlot$groups), 
+       pt.bg = t20, pt.lwd = 1.2, cex = 1, pt.cex = 2.5, inset = c(0.07,0.07), pch = 21)
+
+
+

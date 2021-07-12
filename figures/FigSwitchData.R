@@ -54,6 +54,18 @@ dds = DESeqDataSetFromMatrix(countData = as.matrix(DGEobject$counts), colData = 
 dds = dds[rowSums(counts(dds)) > 1,]
 rld = vst(dds, blind = FALSE)
 
+## select 3000 genes with the highest variance
+rv <- rowVars(assay(rld))
+select <- order(rv, decreasing = TRUE)[seq_len(3000)]
+
+## apply PCA analysis
+pca <- prcomp(t(assay(rld[select, ])))
+pcaPlot = as.data.frame(pca$x)
+pcaPlot = cbind(groups, pcaPlot)
+pcaPlot = pcaPlot[,1:11]
+pcaPlot$ID = sapply(strsplit(row.names(pcaPlot), "_", fixed = T), function(x) x[3])
+var.explained = round(100*pca$sdev^2/sum(pca$sdev^2), 2)
+
 
 # adjust contrasts
 ## contrasts and fits
@@ -589,3 +601,35 @@ ht_list2 = ht_list2 + Heatmap(hm_rows2$Pc.H[rld_cluster$cl %in% c(3,6)],
 
 draw(ht_list2, row_split = rld_cluster$cl[rld_cluster$cl %in% c(3,6)],
      show_row_dend = F)
+
+
+
+# PCA ---------------------------------------------------------------------
+
+library(RColorBrewer)
+library(plot3D)
+
+pcaPlot$groups = factor(pcaPlot$groups)
+
+t20 = ggthemes_data$tableau$`color-palettes`$regular$`Tableau 20`$value
+
+pcaPlot = pcaPlot %>%
+  filter(!(groups %in% c("tkv_control", "tkv_ind"))) %>%
+  dplyr::mutate(groups = droplevels(groups))
+
+
+## FigSwitchGal4PCA.pdf
+
+scatter3D(pcaPlot$PC1, pcaPlot$PC2, pcaPlot$PC3, 
+          bgvar = as.numeric(as.factor(pcaPlot$groups)), 
+          col = "black", bg = t20[as.numeric(pcaPlot$groups)],
+          theta = 40, phi = 60, xlab = paste0("PC1: ", var.explained[1], "% var"),
+          ylab = paste0("PC2: ", var.explained[2], "% var"), zlab = paste0("PC3: ", var.explained[3], "% var"), 
+          bty ="b2", lwd = 1.5, cex = 2.5, colkey = F, alpha = .8, pch = 21)
+legend("right",levels(pcaPlot$groups), 
+       pt.bg = t20, pt.lwd = 1.2, cex = 1, pt.cex = 2.5, inset = c(0.07,0.07), pch = 21)
+
+
+
+
+
