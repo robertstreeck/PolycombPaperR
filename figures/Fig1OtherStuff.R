@@ -75,6 +75,8 @@ gene_set_df2 = gene_set_df %>%
   filter(value) %>%
   group_by(class, name) %>%
   dplyr::summarise(count = n()) %>%
+  pivot_wider(name, names_from = class, values_from = count, values_fill = 0) %>%
+  pivot_longer(!name, values_to = "count", names_to = "class") %>%
   group_by(name) %>%
   dplyr::mutate(fraction = count/sum(count)) %>%
   left_join(bg_expectation %>%
@@ -82,7 +84,9 @@ gene_set_df2 = gene_set_df %>%
             by = "class") %>%
   dplyr::mutate(odds = fraction/expected) %>%
   group_by(name) %>%
-  filter(sum(count) >= 10)
+  filter(sum(count) >= 10) %>%
+  mutate(class = factor(class, 
+                        levels = c("non-Pc", "Pc-I", "Pc-H")))
 
 y.groups = setNames(c(rep("EcR", 3), rep("dpp", 2), rep("Other", 2), "Immunity", rep("Development", 5), 
                       "Immunity", rep("Development", 2), "Jak-Stat",rep("Other", 5), "Immunity", "Other", 
@@ -95,40 +99,20 @@ gene_set_df2 = gene_set_df2 %>%
   dplyr::mutate(yfac = recode(name, !!!y.groups)) %>%
   filter(yfac != "dpp")
 
-p = ggplot(gene_set_df2, aes(class, name, fill = odds)) + geom_tile() +
-  scale_fill_distiller(palette = "Greens", direction = 1, limits = c(0, 2), oob = squish) +
-  facet_wrap(vars(yfac), ncol = 1, scales = "free_y") +
-  theme_bw()
+
+### Fig1OtherStuffHeatmapOfGeneFunctions.pdf
+
+p = ggplot(gene_set_df2, aes(class, name, fill = fraction)) + geom_tile() +
+  scale_fill_gradient(low = "#FFFFFF", high = "#ef6f6a", 
+                      limits = c(0, 1), oob = squish, name = "Fraction\nof genes") +
+  facet_wrap(vars(yfac), ncol = 1, scales = "free_y", strip.position = "right") +
+  theme_bw() + theme(axis.title = element_blank())
 
 gp = adjust_ggplot_facet_size(p)
 grid::grid.draw(gp)
 
 
-### heatmap
-heatmap_table = as.matrix(gene_sets_wide_table[,2:11])
-row.names(heatmap_table) = gene_sets_wide_table$sets
-heatmap_table = t(scale(log(t(heatmap_table)+1)))
-heatmap_table = reshape2::melt(data.frame(set = row.names(heatmap_table), heatmap_table, row.names = NULL))
-heatmap_table$set = factor(as.character(heatmap_table$set), levels = names(c(Alfs_Gene_sets, Peak_gene_list)))
-heatmap_table$variable = factor(as.character(heatmap_table$variable), levels = c("TEl", "TSS", "EnhS", "EnhW", "Het", "PcI", "PcH", "K27low", "K27med", "K27high"))
-heatmap_table$x.facet = c("Chromatin State", "Gene State")[as.numeric(heatmap_table$variable %in% c("K27med", "K27low", "K27high"))+1]
-
-p = ggplot(heatmap_table, aes(variable, set, fill = value)) + geom_tile() + scale_fill_distiller(palette = "RdBu", name = "z-score") +
-  theme_classic() + theme(axis.title = element_blank(), axis.text.x = element_text(angle = 45, vjust = .8, hjust = .8)) +
-  facet_grid(cols = vars(x.facet), scale = "free")
-gp = adjust_ggplot_facet_size(p)
-grid::grid.draw(gp)
 
 
-heatmap_table2 = heatmap_table
-heatmap.yfacets = data.frame(lable = unique(heatmap_table2$set))
-heatmap.yfacets = data.frame(set = heatmap.yfacets[!grepl("Core Component", heatmap.yfacets$lable),])
-heatmap.yfacets$y.facet = c("Jak-Stat", "Immunity", "Development", "EcR", "dpp", "Other")[c(4,4,4,5,5,6,6,2,3,3,3,3,3,2,3,3,1,1,1,2,2,2,6,2,4,6,6,6,1,1)]
-heatmap_table2$y.facet = heatmap.yfacets$y.facet[match(heatmap_table2$set, heatmap.yfacets$set)]
-heatmap_table2 = heatmap_table2[!grepl("Core Component", heatmap_table2$set),]
 
-p = ggplot(heatmap_table2, aes(variable, set, fill = value)) + geom_tile() + scale_fill_distiller(palette = "RdBu", name = "z-score") +
-  theme_classic() + theme(axis.title = element_blank(), axis.text.x = element_text(angle = 45, vjust = .8, hjust = .8)) +
-  facet_grid(cols = vars(x.facet), rows = vars(y.facet), scale = "free")
-gp = adjust_ggplot_facet_size(p)
-grid::grid.draw(gp)
+
